@@ -19,6 +19,7 @@ class Photo():
         self.__file_path__ = file_path
         self.__ext__ = '.' + self.__file_path__.split('.')[-1].lower()
         self.__date__ = self.__findDate__()
+        print(self.__date__)
         
     def __findDate__(self):
         dates = {}
@@ -34,11 +35,9 @@ class Photo():
             except:
                 pass
             
-        # if no EXIF data, load file data
-        #if 0 == len(dates.keys()):
-        dates['atime'] = datetime.fromtimestamp(os.path.getatime(self.__file_path__))
-        dates['ctime'] = datetime.fromtimestamp(os.path.getctime(self.__file_path__))
-        dates['mtime'] = datetime.fromtimestamp(os.path.getmtime(self.__file_path__))
+        # if no EXIF data, load file created date
+        if 0 == len(dates.keys()):
+            dates['ctime'] = datetime.fromtimestamp(os.path.getctime(self.__file_path__))
 
         # take the oldest of all dates found to be the creation date
         try:
@@ -82,17 +81,14 @@ class Photo():
 #  f u n c t i o n s
 def __listPhotos__(path, ext=['jpg', 'jpeg', 'png']):
     photos = []
-    for p in os.listdir(photo_dir):
-        # skip if not a file
-        if not os.path.isfile('%s\\%s' % (photo_dir, p)):
-            continue
+    for root, dirs, files in os.walk(photo_dir):
+        for f in files:
+            # skip if not an image
+            if not f.split('.')[-1].lower() in ['jpg', 'jpeg', 'png']:
+                continue
             
-        # skip if not an image
-        if not p.split('.')[-1].lower() in ['jpg', 'jpeg', 'png']:
-            continue
-            
-        photos.append(Photo(os.path.join(photo_dir, p)))
-        
+            photos.append(Photo(os.path.join(root, f)))
+
     return photos
 
 def __sortPhotos__(photos=[]):
@@ -124,7 +120,7 @@ for P in photos:
     for C in contemporary:
         #print(C.getOriginalPath(), C.getTempPath())
         os.rename(C.getOriginalPath(), C.getTempPath())
-                
+        
     s = __sortPhotos__(contemporary)
     for i in range(len(s)):
         os.rename(s[i].getTempPath(), s[i].getTargetPath(i))
